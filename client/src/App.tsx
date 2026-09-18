@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./styles.css";
 
 type Dashboard = {
-  company: { name: string };
+  company: { id: string; name: string };
   card: { status: "active" | "inactive"; invoiceDue: string };
   spending: { used: number; limit: number; currency: "SEK" };
   transactions: Array<{
@@ -15,22 +15,46 @@ type Dashboard = {
   remainingTransactionCount: number;
 };
 
+type Company = {
+  id: string;
+  name: string;
+};
+
 const formatMoney = (amount: number, currency: string) =>
   new Intl.NumberFormat("sv-SE", { style: "currency", currency }).format(amount);
 
 function App() {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/dashboard")
+    fetch("http://localhost:3000/api/companies")
+      .then((response) => {
+        if (!response.ok) throw new Error("Kunde inte hämta företag.");
+        return response.json() as Promise<Company[]>;
+      })
+      .then((loadedCompanies) => {
+        if (loadedCompanies.length === 0) throw new Error("Inga företag hittades.");
+        setCompanies(loadedCompanies);
+        setSelectedCompanyId(loadedCompanies[0].id);
+      })
+      .catch(() => setError("Kunde inte hämta företag."));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+
+    setDashboard(null);
+    fetch(`http://localhost:3000/api/dashboard?companyId=${encodeURIComponent(selectedCompanyId)}`)
       .then((response) => {
         if (!response.ok) throw new Error("Kunde inte hämta dashboard-data.");
         return response.json() as Promise<Dashboard>;
       })
       .then(setDashboard)
       .catch(() => setError("Kunde inte hämta dashboard-data."));
-  }, []);
+  }, [selectedCompanyId]);
 
   if (error) return <main className="status">{error}</main>;
   if (!dashboard) return <main className="status">Laddar dashboard...</main>;
@@ -48,8 +72,15 @@ function App() {
 
       <label className="company-picker">
         <span className="sr-only">Välj företag</span>
-        <select defaultValue={dashboard.company.name}>
-          <option>{dashboard.company.name}</option>
+        <select
+          value={selectedCompanyId}
+          onChange={(event) => setSelectedCompanyId(event.target.value)}
+        >
+          {companies.map((company) => (
+            <option key={company.id} value={company.id}>
+              {company.name}
+            </option>
+          ))}
         </select>
       </label>
 

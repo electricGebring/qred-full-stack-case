@@ -73,6 +73,11 @@ type CompanyRow = {
   remaining_transaction_count: number;
 };
 
+export type CompanySummary = {
+  id: string;
+  name: string;
+};
+
 type CardRow = {
   status: "active" | "inactive";
   invoice_due: string;
@@ -86,11 +91,21 @@ type TransactionRow = {
   occurred_at: string;
 };
 
-export function getDashboard(): DashboardResponse {
+export function getCompanies(): CompanySummary[] {
+  return database
+    .prepare("SELECT id, name FROM companies ORDER BY name")
+    .all() as CompanySummary[];
+}
+
+export function getDashboard(companyId: string): DashboardResponse {
   const company = database.prepare(`
     SELECT id, name, spending_limit, remaining_transaction_count
     FROM companies WHERE id = ?
-  `).get("company-ab") as CompanyRow;
+  `).get(companyId) as CompanyRow | undefined;
+
+  if (!company) {
+    throw new Error(`Company not found: ${companyId}`);
+  }
 
   const card = database.prepare(`
     SELECT status, invoice_due FROM cards WHERE company_id = ?
