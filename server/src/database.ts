@@ -1,0 +1,122 @@
+import Database from "better-sqlite3";
+import { mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import type { DashboardResponse } from "./dashboard.js";
+
+const serverDirectory = dirname(fileURLToPath(import.meta.url));
+const databasePath = join(serverDirectory, "..", "data", "qred.db");
+
+mkdirSync(dirname(databasePath), { recursive: true });
+
+const database = new Database(databasePath);
+database.pragma("journal_mode = WAL");
+
+database.exec(`
+  CREATE TABLE IF NOT EXISTS companies (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    spending_limit INTEGER NOT NULL,
+    remaining_transaction_count INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS cards (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL REFERENCES companies(id),
+    status TEXT NOT NULL CHECK (status IN ('active', 'inactive')),
+    invoice_due TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS transactions (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL REFERENCES companies(id),
+    description TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    currency TEXT NOT NULL,
+    occurred_at TEXT NOT NULL
+  );
+`);
+
+const company = database
+  .prepare("SELECT id FROM companies WHERE id = ?")
+  .get("company-ab");
+
+if (!company) {
+  database.prepare(`
+    INSERT INTO companies (id, name, spending_limit, remaining_transaction_count)
+    VALUES (?, ?, ?, ?)
+  `).run("company-ab", "Company AB", 10000, 54);
+
+  database.prepare(`
+    INSERT INTO cards (id, company_id, status, invoice_due)
+    VALUES (?, ?, ?, ?)
+  `).run("card-ab", "company-ab", "active", "2026-09-30");
+
+  const addTransaction = database.prepare(`
+    INSERT INTO transactions (id, company_id, description, amount, currency, occurred_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  const seedTransactions = database.transaction(() => {
+    addTransaction.run("transaction-1", "company-ab", "Office supplies", 1250, "SEK", "2026-09-17");
+    addTransaction.run("transaction-2", "company-ab", "Travel booking", 2300, "SEK", "2026-09-15");
+    addTransaction.run("transaction-3", "company-ab", "Software subscription", 1850, "SEK", "2026-09-12");
+  });
+
+  seedTransactions();
+}
+
+type CompanyRow = {
+  id: string;
+  name: string;
+  spending_limit: number;
+  remaining_transaction_count: number;
+};
+
+type CardRow = {
+  status: "active" | "inactive";
+  invoice_due: string;
+};
+
+type TransactionRow = {
+  id: string;
+  description: string;
+  amount: number;
+  currency: "SEK";
+  occurred_at: string;
+};
+
+export function getDashboard(): DashboardResponse {
+  const company = database.prepare(`
+    SELECT id, name, spending_limit, remaining_transaction_count
+    FROM companies WHERE id = ?
+  `).get("company-ab") as CompanyRow;
+
+  const card = database.prepare(`
+    SELECT status, invoice_due FROM cards WHERE company_id = ?
+  `).get(company.id) as CardRow;
+
+  const transactions = database.prepare(`
+    SELECT id, description, amount, currency, occurred_at
+    FROM transactions WHERE company_id = ?
+    ORDER BY occurred_at DESC
+  `).all(company.id) as TransactionRow[];
+
+  return {
+    company: { id: company.id, name: company.name },
+    card: { status: card.status, invoiceDue: card.invoice_due },
+    spending: {
+      used: transactions.reduce((total, transaction) => total + transaction.amount, 0),
+      limit: company.spending_limit,
+      currency: "SEK"
+    },
+    transactions: transactions.map((transaction) => ({
+      id: transaction.id,
+      description: transaction.description,
+      amount: transaction.amount,
+      currency: transaction.currency,
+      occurredAt: transaction.occurred_at
+    })),
+    remainingTransactionCount: company.remaining_transaction_count
+  };
+}

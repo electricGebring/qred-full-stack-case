@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { dashboard } from "./dashboard.js";
+import { getDashboard } from "./database.js";
 
 const app = express();
 const port = 3000;
@@ -12,7 +12,7 @@ app.get("/api/health", (_request, response) => {
 });
 
 app.get("/api/dashboard", (_request, response) => {
-  response.json(dashboard);
+  response.json(getDashboard());
 });
 
 app.listen(port, () => {
