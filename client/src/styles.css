@@ -1,0 +1,49 @@
+:root {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #102b30;
+  background: #dbe6e2;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, select { font: inherit; }
+button { cursor: pointer; }
+
+.phone-shell {
+  width: min(100%, 440px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 28px 20px 32px;
+  background: #f8f8f3;
+}
+
+.topbar, .section-heading, .transaction, .invoice-card, .more-button {
+  display: flex;
+  align-items: center;
+}
+.topbar { justify-content: space-between; margin-bottom: 28px; }
+.brand { font-size: 2.5rem; letter-spacing: -0.08em; }
+.brand span { color: #e45b39; }
+.menu-button, .actions button { border: 0; background: #102b30; color: white; }
+.menu-button { padding: 10px 16px; }
+.company-picker select { width: 100%; padding: 15px; border: 1px solid #cbd6d1; background: white; color: #102b30; }
+.invoice-card, .more-button { width: 100%; justify-content: space-between; border: 0; padding: 16px; background: #e9eeea; color: #102b30; }
+.invoice-card { margin-top: 16px; }
+.invoice-card strong { margin-left: auto; margin-right: 16px; }
+.spending-card, .transactions { margin-top: 16px; padding: 20px; background: #dce9e3; }
+.section-heading { justify-content: space-between; }
+h1, h2 { margin: 0; font-size: 1.1rem; }
+.spending-total { display: block; margin: 30px 0 14px; font-size: 1.25rem; }
+.progress-track { height: 8px; background: #bfd0c7; }
+.progress-track span { display: block; height: 100%; background: #e45b39; }
+p { margin: 12px 0 0; font-size: .9rem; }
+.transactions h2 { margin-bottom: 12px; }
+.transaction { justify-content: space-between; padding: 14px 0; border-top: 1px solid #c5d4cc; }
+.transaction small { display: block; margin-top: 4px; color: #53706c; }
+.transaction strong { font-size: .9rem; }
+.more-button { margin: 12px -20px -20px; width: calc(100% + 40px); background: #f8f8f3; border: 1px solid #102b30; }
+.actions { display: grid; gap: 10px; margin-top: 24px; }
+.actions button { padding: 15px; border: 0; }
+.status { display: grid; min-height: 100vh; place-items: center; padding: 24px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
