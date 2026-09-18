@@ -1,0 +1,9 @@
+{
+  "name": "qred-full-stack-case",
+  "private": true,
+  "workspaces": ["server", "client"],
+  "scripts": {
+    "dev": "npm run dev --workspace server",
+    "build": "npm run build --workspace server"
+  }
+}
