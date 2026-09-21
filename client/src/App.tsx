@@ -30,6 +30,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [isActivatingCard, setIsActivatingCard] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:3000/api/companies")
@@ -141,14 +142,20 @@ function App() {
 
       <section className="transactions" id="transactions">
         <h2>Latest transactions</h2>
-        {dashboard.transactions.map((transaction) => (
+        {dashboard.transactions
+          .slice(0, showAllTransactions ? dashboard.transactions.length : 2)
+          .map((transaction) => (
           <div className="transaction" key={transaction.id}>
             <span>{transaction.description}<small>{transaction.occurredAt}</small></span>
             <strong>{formatMoney(transaction.amount, transaction.currency)}</strong>
           </div>
         ))}
-        <button className="more-button" type="button">
-          {dashboard.remainingTransactionCount} more items in transaction view <span>›</span>
+        <button
+          className="more-button"
+          type="button"
+          onClick={() => setShowAllTransactions((isShown) => !isShown)}
+        >
+          {showAllTransactions ? "Show fewer transactions" : "Show all loaded transactions"} <span>›</span>
         </button>
       </section>
 
