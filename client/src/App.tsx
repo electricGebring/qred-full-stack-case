@@ -28,6 +28,7 @@ function App() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isActivatingCard, setIsActivatingCard] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:3000/api/companies")
@@ -55,6 +56,26 @@ function App() {
       .then(setDashboard)
       .catch(() => setError("Kunde inte hämta dashboard-data."));
   }, [selectedCompanyId]);
+
+  const activateCard = () => {
+    if (!dashboard || dashboard.card.status === "active") return;
+
+    setIsActivatingCard(true);
+    fetch(`http://localhost:3000/api/cards/${encodeURIComponent(selectedCompanyId)}/activate`, {
+      method: "POST"
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Kunde inte aktivera kortet.");
+        return fetch(`http://localhost:3000/api/dashboard?companyId=${encodeURIComponent(selectedCompanyId)}`);
+      })
+      .then((response) => {
+        if (!response.ok) throw new Error("Kunde inte uppdatera dashboard-data.");
+        return response.json() as Promise<Dashboard>;
+      })
+      .then(setDashboard)
+      .catch(() => setError("Kunde inte aktivera kortet."))
+      .finally(() => setIsActivatingCard(false));
+  };
 
   if (error) return <main className="status">{error}</main>;
   if (!dashboard) return <main className="status">Laddar dashboard...</main>;
@@ -116,7 +137,13 @@ function App() {
       </section>
 
       <div className="actions">
-        <button type="button">{dashboard.card.status === "active" ? "Card active" : "Activate card"}</button>
+        <button
+          type="button"
+          onClick={activateCard}
+          disabled={dashboard.card.status === "active" || isActivatingCard}
+        >
+          {isActivatingCard ? "Activating..." : dashboard.card.status === "active" ? "Card active" : "Activate card"}
+        </button>
         <button type="button">Contact Qred&apos;s support</button>
       </div>
     </main>

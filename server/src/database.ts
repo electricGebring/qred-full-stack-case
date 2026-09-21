@@ -79,7 +79,7 @@ if (!secondCompany) {
   database.prepare(`
     INSERT INTO cards (id, company_id, status, invoice_due)
     VALUES (?, ?, ?, ?)
-  `).run("card-nordic", "company-nordic", "active", "2026-10-05");
+  `).run("card-nordic", "company-nordic", "inactive", "2026-10-05");
 
   const addSecondCompanyTransaction = database.prepare(`
     INSERT INTO transactions (id, company_id, description, amount, currency, occurred_at)
@@ -162,4 +162,28 @@ export function getDashboard(companyId: string): DashboardResponse {
     })),
     remainingTransactionCount: company.remaining_transaction_count
   };
+}
+
+export function activateCard(companyId: string): void {
+  const result = database.prepare(`
+    UPDATE cards
+    SET status = 'active'
+    WHERE company_id = ?
+  `).run(companyId);
+
+  if (result.changes === 0) {
+    throw new Error(`Card not found for company: ${companyId}`);
+  }
+}
+
+export function deactivateCard(companyId: string): void {
+  const result = database.prepare(`
+    UPDATE cards
+    SET status = 'inactive'
+    WHERE company_id = ?
+  `).run(companyId);
+
+  if (result.changes === 0) {
+    throw new Error(`Card not found for company: ${companyId}`);
+  }
 }

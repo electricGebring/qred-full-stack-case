@@ -25,7 +25,7 @@
 1. Product and engineering agree on user flow and acceptance criteria.
 2. Frontend and backend agree on the API contract.
 3. Frontend can start with agreed example data while backend is implemented.
-4. Frontend builds against the mock while backend builds the real implementation.
+4. Frontend can build against the agreed example data while backend builds the real implementation.
 5. Add contract tests when the API becomes shared by multiple teams.
 6. Integration happens continuously in CI.
 
