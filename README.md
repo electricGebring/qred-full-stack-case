@@ -30,6 +30,14 @@ npm run dev --workspace client
 
 Open the Vite URL shown in the terminal, normally `http://localhost:5173`.
 
+Run the backend API tests from the project root:
+
+```bash
+npm test --workspace server
+```
+
+The tests cover the company list, missing and unknown `companyId` values, and the card status actions.
+
 ## API
 
 ### `GET /api/health`
@@ -45,6 +53,13 @@ Returns the companies available to the current user/demo session.
 Returns the company, card, spending, and latest transaction data needed by the dashboard.
 
 The API returns `400` when `companyId` is missing and `404` when the company does not exist.
+
+### Card status actions
+
+```text
+POST /api/cards/:companyId/activate
+POST /api/cards/:companyId/deactivate
+```
 
 ## Data model
 
@@ -62,4 +77,4 @@ The seed values are demo fixtures, not production configuration. In a real syste
 
 ## Further work
 
-With more time, I would add authentication and authorization, schema validation, API tests, database migrations, pagination for transactions, and a production deployment configuration. The action buttons would also connect to real card activation and support workflows.
+With more time, I would add authentication and authorization, schema validation, database migrations, pagination for transactions, and a production deployment configuration. The support action would connect to a real support workflow.

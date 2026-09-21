@@ -3,8 +3,6 @@ import cors from "cors";
 import { activateCard, deactivateCard, getCompanies, getDashboard } from "./database.js";
 
 const app = express();
-const port = 3000;
-
 app.use(cors({ origin: "http://localhost:5173" }));
 
 app.get("/api/health", (_request, response) => {
@@ -48,6 +46,11 @@ app.get("/api/dashboard", (request, response) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`API server listening on http://localhost:${port}`);
-});
+export default app;
+
+if (process.env.NODE_ENV !== "test") {
+  const port = 3000;
+  app.listen(port, () => {
+    console.log(`API server listening on http://localhost:${port}`);
+  });
+}
