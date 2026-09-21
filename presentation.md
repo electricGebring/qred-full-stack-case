@@ -1,90 +1,75 @@
 # Qred Full-Stack Case Study
-## Strategy, collaboration, and implementation
+## A simple approach to collaboration and delivery
 
-### Slide 1: The challenge
+### 1. The problem
 
-- API decisions happen too late.
-- Product requirements do not always contain enough technical detail.
-- Frontend work is blocked while waiting for backend APIs.
-- Teams need a reliable way to work in parallel.
+Qred's teams experience three main problems:
 
-**Talk track:** The main problem is not only implementation speed. It is that uncertainty is discovered too late, when changes are more expensive.
+- The API is sometimes decided too late.
+- Product requirements can be unclear technically.
+- Frontend work can be blocked while waiting for backend work.
 
-### Slide 2: Start with a shared API contract
+My goal would be to make the expected data and user flow clear early.
 
-- Turn product requirements into an API contract early.
-- For this demo, the contract is represented by TypeScript types, Express routes, and README documentation.
-- In a larger team, I would formalize the same contract with OpenAPI if that matched the team's tooling.
-- Review the contract together with Product, Frontend, and Backend.
-- Treat the contract as a versioned artifact in the repository.
+### 2. Agree on the API early
 
-**Example:** `GET /api/dashboard?companyId={id}` defines the data needed by the mobile view before the database implementation is finished.
+Before implementation, Product, Frontend, and Backend should agree on:
 
-### Slide 3: Enable parallel work
+- What the user should be able to do
+- What data the screen needs
+- What the API request looks like
+- What happens while loading or when something fails
 
-1. Product and engineering agree on user flow and acceptance criteria.
-2. Frontend and backend agree on the API contract.
-3. Frontend can start with agreed example data while backend is implemented.
-4. Frontend can build against the agreed example data while backend builds the real implementation.
-5. Add contract tests when the API becomes shared by multiple teams.
-6. Integration happens continuously in CI.
+For this demo, that agreement is represented by TypeScript types, Express routes, and the README.
 
-**Result:** Frontend is not blocked by backend implementation timing.
+The frontend then knows what data to expect while the backend is being built.
 
-### Slide 4: Support Product Managers
+### 3. How teams can work in parallel
 
-Use a lightweight technical specification template:
+1. Product explains the user goal and expected result.
+2. Frontend and Backend agree on a small API response.
+3. Frontend can use example data while Backend connects the real database.
+4. Both teams show their work early and adjust together.
 
-- User goal and acceptance criteria
-- Data needed by the screen
-- API operations and example payloads
-- Loading, empty, and error states
-- Permissions and security assumptions
-- Analytics and non-functional requirements
+This reduces waiting and makes misunderstandings visible sooner.
 
-A Full-Stack Developer can join refinement sessions, ask clarifying questions, and turn ambiguous requirements into testable examples.
+### 4. How I would support Product Managers
 
-### Slide 5: Quality and delivery speed
+I would help turn a product idea into concrete questions:
 
-- Keep API types close to the contract and add focused endpoint tests.
-- Introduce generated clients or contract tests when the API grows or is shared by multiple teams.
-- Validate request parameters at the API boundary.
-- Use structured logging and meaningful HTTP status codes.
-- Keep database migrations and seed data reproducible.
-- Review small pull requests early instead of integrating large changes late.
+- What should happen when there is no data?
+- What should happen when the API fails?
+- Which user is allowed to see or change the data?
+- What should each button do?
+- Which fields are required?
 
-Speed comes from reducing rework, not from skipping design or testing.
+For this case, these questions helped define the company selector, card status, spending information, transactions, and error states.
 
-### Slide 6: How this case implementation reflects the approach
+### 5. What I built
 
-- React consumes an Express API instead of embedding dashboard data.
-- The frontend loads companies and requests a dashboard by selected `companyId`.
-- SQLite models companies, cards, and transactions separately.
-- The API returns only the data needed by the mobile view.
-- Loading and error states are represented in the frontend.
-- The project includes local setup and API documentation in `README.md`.
+- A React mobile dashboard
+- An Express API
+- A SQLite database with companies, cards, and transactions
+- A company selector with two demo companies
+- Card activation through the API
+- Loading and error handling
+- API tests for successful and invalid requests
 
-### Slide 7: Qred values and next steps
+Demo flow:
 
-**Transparency**
+1. Start the API and frontend.
+2. Show the dashboard.
+3. Select `Nordic AB`.
+4. Activate the inactive card.
+5. Open the menu and the support link.
+6. Show one successful API request and one error response.
 
-- Shared contracts, visible assumptions, documented trade-offs, and clear error responses.
+### Values and limitations
 
-**Innovation**
+**Transparency:** I documented assumptions and return clear API errors.
 
-- Mock-first development and reusable API patterns. OpenAPI and automated contract checks are possible next steps, not part of this demo.
+**Innovation:** I chose a small solution that can be extended without blocking frontend work.
 
-**Passion**
+**Passion:** I focused on a clear mobile experience and a complete working flow.
 
-- Close collaboration, attention to the user experience, and continuous improvement.
-
-**With more time:** authentication and authorization, schema validation, migrations, pagination, automated API tests, observability, and production deployment.
-
-### Demo flow
-
-1. Start the Express API and React client.
-2. Show the mobile dashboard.
-3. Select another company from the dropdown.
-4. Show that the API request contains the selected `companyId`.
-5. Demonstrate missing and unknown `companyId` responses.
-6. Explain how the same API contract enabled frontend and backend work in parallel.
+With more time, I would add authentication, more validation, pagination for transactions, and connect the actions to real Qred services.
