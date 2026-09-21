@@ -66,6 +66,34 @@ if (!company) {
   seedTransactions();
 }
 
+const secondCompany = database
+  .prepare("SELECT id FROM companies WHERE id = ?")
+  .get("company-nordic");
+
+if (!secondCompany) {
+  database.prepare(`
+    INSERT INTO companies (id, name, spending_limit, remaining_transaction_count)
+    VALUES (?, ?, ?, ?)
+  `).run("company-nordic", "Nordic AB", 15000, 27);
+
+  database.prepare(`
+    INSERT INTO cards (id, company_id, status, invoice_due)
+    VALUES (?, ?, ?, ?)
+  `).run("card-nordic", "company-nordic", "active", "2026-10-05");
+
+  const addSecondCompanyTransaction = database.prepare(`
+    INSERT INTO transactions (id, company_id, description, amount, currency, occurred_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  const seedSecondCompanyTransactions = database.transaction(() => {
+    addSecondCompanyTransaction.run("transaction-4", "company-nordic", "Client dinner", 3200, "SEK", "2026-09-18");
+    addSecondCompanyTransaction.run("transaction-5", "company-nordic", "Equipment rental", 2500, "SEK", "2026-09-16");
+  });
+
+  seedSecondCompanyTransactions();
+}
+
 type CompanyRow = {
   id: string;
   name: string;
