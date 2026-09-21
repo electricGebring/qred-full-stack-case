@@ -29,6 +29,7 @@ function App() {
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isActivatingCard, setIsActivatingCard] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:3000/api/companies")
@@ -88,8 +89,23 @@ function App() {
     <main className="phone-shell">
       <header className="topbar">
         <strong className="brand">qred<span>.</span></strong>
-        <button className="menu-button" type="button">Meny</button>
+        <button
+          className="menu-button"
+          type="button"
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((isOpen) => !isOpen)}
+        >
+          Meny
+        </button>
       </header>
+
+      {isMenuOpen && (
+        <nav className="menu-panel" aria-label="Main menu">
+          <a href="#dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</a>
+          <a href="#transactions" onClick={() => setIsMenuOpen(false)}>Transactions</a>
+          <a href="mailto:support@qred.com">Support</a>
+        </nav>
+      )}
 
       <label className="company-picker">
         <span className="sr-only">Välj företag</span>
@@ -123,7 +139,7 @@ function App() {
         <p>based on your set limit</p>
       </section>
 
-      <section className="transactions">
+      <section className="transactions" id="transactions">
         <h2>Latest transactions</h2>
         {dashboard.transactions.map((transaction) => (
           <div className="transaction" key={transaction.id}>
