@@ -25,7 +25,7 @@ button { cursor: pointer; }
 .topbar { justify-content: space-between; margin-bottom: 28px; }
 .brand { font-size: 2.5rem; letter-spacing: -0.08em; }
 .brand span { color: #e45b39; }
-.menu-button, .actions button { border: 0; background: #102b30; color: white; }
+.menu-button, .actions button, .action-link { border: 0; background: #102b30; color: white; }
 .menu-button { padding: 10px 16px; }
 .company-picker select { width: 100%; padding: 15px; border: 1px solid #cbd6d1; background: white; color: #102b30; }
 .invoice-card, .more-button { width: 100%; justify-content: space-between; border: 0; padding: 16px; background: #e9eeea; color: #102b30; }
@@ -44,6 +44,6 @@ p { margin: 12px 0 0; font-size: .9rem; }
 .transaction strong { font-size: .9rem; }
 .more-button { margin: 12px -20px -20px; width: calc(100% + 40px); background: #f8f8f3; border: 1px solid #102b30; }
 .actions { display: grid; gap: 10px; margin-top: 24px; }
-.actions button { padding: 15px; border: 0; }
+.actions button, .action-link { padding: 15px; border: 0; text-align: center; text-decoration: none; }
 .status { display: grid; min-height: 100vh; place-items: center; padding: 24px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }

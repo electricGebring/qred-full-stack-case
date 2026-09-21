@@ -144,7 +144,9 @@ function App() {
         >
           {isActivatingCard ? "Activating..." : dashboard.card.status === "active" ? "Card active" : "Activate card"}
         </button>
-        <button type="button">Contact Qred&apos;s support</button>
+        <a className="action-link" href="mailto:support@qred.com">
+          Contact Qred&apos;s support
+        </a>
       </div>
     </main>
   );
