@@ -49,6 +49,8 @@ function App() {
   useEffect(() => {
     if (!selectedCompanyId) return;
 
+    setError(null);
+    setShowAllTransactions(false);
     setDashboard(null);
     fetch(`http://localhost:3000/api/dashboard?companyId=${encodeURIComponent(selectedCompanyId)}`)
       .then((response) => {
