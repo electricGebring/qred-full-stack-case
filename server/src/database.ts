@@ -37,61 +37,70 @@ database.exec(`
   );
 `);
 
-const company = database
-  .prepare("SELECT id FROM companies WHERE id = ?")
-  .get("company-ab");
+const companySeeds = [
+  { id: "company-ab", name: "Company AB", spendingLimit: 10000, remainingTransactions: 54 },
+  { id: "company-nordic", name: "Nordic AB", spendingLimit: 15000, remainingTransactions: 27 }
+];
 
-if (!company) {
-  database.prepare(`
-    INSERT INTO companies (id, name, spending_limit, remaining_transaction_count)
-    VALUES (?, ?, ?, ?)
-  `).run("company-ab", "Company AB", 10000, 54);
+for (const companySeed of companySeeds) {
+  const company = database
+    .prepare("SELECT id FROM companies WHERE id = ?")
+    .get(companySeed.id);
 
-  database.prepare(`
-    INSERT INTO cards (id, company_id, status, invoice_due)
-    VALUES (?, ?, ?, ?)
-  `).run("card-ab", "company-ab", "active", "2026-09-30");
-
-  const addTransaction = database.prepare(`
-    INSERT INTO transactions (id, company_id, description, amount, currency, occurred_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-
-  const seedTransactions = database.transaction(() => {
-    addTransaction.run("transaction-1", "company-ab", "Office supplies", 1250, "SEK", "2026-09-17");
-    addTransaction.run("transaction-2", "company-ab", "Travel booking", 2300, "SEK", "2026-09-15");
-    addTransaction.run("transaction-3", "company-ab", "Software subscription", 1850, "SEK", "2026-09-12");
-  });
-
-  seedTransactions();
+  if (!company) {
+    database.prepare(`
+      INSERT INTO companies (id, name, spending_limit, remaining_transaction_count)
+      VALUES (?, ?, ?, ?)
+    `).run(companySeed.id, companySeed.name, companySeed.spendingLimit, companySeed.remainingTransactions);
+  }
 }
 
-const secondCompany = database
-  .prepare("SELECT id FROM companies WHERE id = ?")
-  .get("company-nordic");
+const cardSeeds = [
+  { id: "card-ab", companyId: "company-ab", status: "active", invoiceDue: "2026-09-30" },
+  { id: "card-nordic", companyId: "company-nordic", status: "inactive", invoiceDue: "2026-10-05" }
+];
 
-if (!secondCompany) {
-  database.prepare(`
-    INSERT INTO companies (id, name, spending_limit, remaining_transaction_count)
-    VALUES (?, ?, ?, ?)
-  `).run("company-nordic", "Nordic AB", 15000, 27);
+for (const cardSeed of cardSeeds) {
+  const card = database
+    .prepare("SELECT id FROM cards WHERE id = ?")
+    .get(cardSeed.id);
 
-  database.prepare(`
-    INSERT INTO cards (id, company_id, status, invoice_due)
-    VALUES (?, ?, ?, ?)
-  `).run("card-nordic", "company-nordic", "inactive", "2026-10-05");
+  if (!card) {
+    database.prepare(`
+      INSERT INTO cards (id, company_id, status, invoice_due)
+      VALUES (?, ?, ?, ?)
+    `).run(cardSeed.id, cardSeed.companyId, cardSeed.status, cardSeed.invoiceDue);
+  }
+}
 
-  const addSecondCompanyTransaction = database.prepare(`
-    INSERT INTO transactions (id, company_id, description, amount, currency, occurred_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
+const transactionSeeds = {
+  "company-ab": [
+    { id: "transaction-1", description: "Office supplies", amount: 1250, occurredAt: "2026-09-17" },
+    { id: "transaction-2", description: "Travel booking", amount: 2300, occurredAt: "2026-09-15" },
+    { id: "transaction-3", description: "Software subscription", amount: 1850, occurredAt: "2026-09-12" },
+    { id: "transaction-4", description: "Marketing campaign", amount: 3100, occurredAt: "2026-09-10" },
+    { id: "transaction-5", description: "Hardware refresh", amount: 4200, occurredAt: "2026-09-08" }
+  ],
+  "company-nordic": [
+    { id: "transaction-6", description: "Client dinner", amount: 3200, occurredAt: "2026-09-18" },
+    { id: "transaction-7", description: "Equipment rental", amount: 2500, occurredAt: "2026-09-16" },
+    { id: "transaction-8", description: "Staff onboarding", amount: 1950, occurredAt: "2026-09-14" },
+    { id: "transaction-9", description: "Cloud hosting", amount: 1350, occurredAt: "2026-09-11" },
+    { id: "transaction-10", description: "Insurance premium", amount: 4700, occurredAt: "2026-09-09" }
+  ]
+};
 
-  const seedSecondCompanyTransactions = database.transaction(() => {
-    addSecondCompanyTransaction.run("transaction-4", "company-nordic", "Client dinner", 3200, "SEK", "2026-09-18");
-    addSecondCompanyTransaction.run("transaction-5", "company-nordic", "Equipment rental", 2500, "SEK", "2026-09-16");
-  });
+const addTransaction = database.prepare(`
+  INSERT INTO transactions (id, company_id, description, amount, currency, occurred_at)
+  VALUES (?, ?, ?, ?, ?, ?)
+`);
 
-  seedSecondCompanyTransactions();
+database.prepare("DELETE FROM transactions").run();
+
+for (const [companyId, seeds] of Object.entries(transactionSeeds)) {
+  for (const seed of seeds) {
+    addTransaction.run(seed.id, companyId, seed.description, seed.amount, "SEK", seed.occurredAt);
+  }
 }
 
 type CompanyRow = {

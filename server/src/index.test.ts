@@ -21,6 +21,20 @@ test("GET /api/dashboard requires a companyId", async () => {
   });
 });
 
+test("GET /api/dashboard returns exactly five demo transactions for each company", async () => {
+  const firstResponse = await request(app)
+    .get("/api/dashboard?companyId=company-ab");
+
+  expect(firstResponse.status).toBe(200);
+  expect(firstResponse.body.transactions).toHaveLength(5);
+
+  const secondResponse = await request(app)
+    .get("/api/dashboard?companyId=company-nordic");
+
+  expect(secondResponse.status).toBe(200);
+  expect(secondResponse.body.transactions).toHaveLength(5);
+});
+
 test("GET /api/dashboard returns 404 for an unknown company", async () => {
   const response = await request(app)
     .get("/api/dashboard?companyId=does-not-exist");
