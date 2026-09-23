@@ -17,12 +17,12 @@ Before implementation, Product, Frontend, and Backend should agree on:
 
 - What the user should be able to do
 - What data the screen needs
-- What the API request looks like
+- What the API response should look like
 - What happens while loading or when something fails
 
-For this demo, that agreement is represented by TypeScript types, Express routes, and the README.
+In this demo, that agreement is represented by the dashboard contract, the Express routes, and the TypeScript models.
 
-The frontend then knows what data to expect while the backend is being built.
+That gives Frontend a predictable contract while the backend is being built and avoids late surprises.
 
 ### 3. How teams can work in parallel
 
@@ -48,28 +48,29 @@ For this case, these questions helped define the company selector, card status, 
 ### 5. What I built
 
 - A React mobile dashboard
-- An Express API
+- An Express API with a simple typed contract
 - A SQLite database with companies, cards, and transactions
 - A company selector with two demo companies
-- Card activation through the API
+- Card activation and refresh of the dashboard state
+- Transaction list toggle to show more items when needed
 - Loading and error handling
-- API tests for successful and invalid requests
+- API tests for the main happy-path and invalid cases
 
 Demo flow:
 
 1. Start the API and frontend.
-2. Show the dashboard.
-3. Select `Nordic AB`.
-4. Activate the inactive card.
-5. Open the menu and the support link.
-6. Show one successful API request and one error response.
+2. Show the dashboard for `Nordic AB`.
+3. Activate the inactive card.
+4. Open the menu and click the support link.
+5. Show the transaction list and the toggle behavior.
+6. Explain that the API contract was agreed before implementation.
 
 ### Values and limitations
 
-**Transparency:** I documented assumptions and return clear API errors.
+**Transparency:** I kept the API contract explicit and documented the main assumptions and error states.
 
-**Innovation:** I chose a small solution that can be extended without blocking frontend work.
+**Collaboration:** I chose a small but realistic setup that lets Frontend and Backend work in parallel without blocking each other.
 
-**Passion:** I focused on a clear mobile experience and a complete working flow.
+**Delivery focus:** I prioritized a clear mobile experience and a complete working flow over overbuilding the solution.
 
-With more time, I would add authentication, more validation, pagination for transactions, and connect the actions to real Qred services.
+With more time, I would add authentication, more validation, pagination for transactions, and real integration to Qred services.
