@@ -84,8 +84,9 @@ function App() {
   if (error) return <main className="status">{error}</main>;
   if (!dashboard) return <main className="status">Laddar dashboard...</main>;
 
-  const spendingPercentage = Math.round(
-    (dashboard.spending.used / dashboard.spending.limit) * 100
+  const remainingAmount = Math.max(dashboard.spending.limit - dashboard.spending.used, 0);
+  const remainingPercentage = Math.round(
+    (remainingAmount / dashboard.spending.limit) * 100
   );
 
   return (
@@ -133,17 +134,18 @@ function App() {
       <section className="spending-card">
         <div className="section-heading">
           <h1>Remaining spend</h1>
-          <span>{spendingPercentage}%</span>
+          <span>{remainingPercentage}%</span>
         </div>
         <strong className="spending-total">
-          {formatMoney(dashboard.spending.used, dashboard.spending.currency)} / {formatMoney(dashboard.spending.limit, dashboard.spending.currency)}
+          {formatMoney(remainingAmount, dashboard.spending.currency)} / {formatMoney(dashboard.spending.limit, dashboard.spending.currency)}
         </strong>
-        <div className="progress-track"><span style={{ width: `${spendingPercentage}%` }} /></div>
+        <div className="progress-track"><span style={{ width: `${remainingPercentage}%` }} /></div>
         <p>based on your set limit</p>
       </section>
 
       <section className="transactions" id="transactions">
         <h2>Latest transactions</h2>
+        <p className="transaction-summary">{dashboard.remainingTransactionCount} more transactions available</p>
         {dashboard.transactions
           .slice(0, showAllTransactions ? dashboard.transactions.length : 2)
           .map((transaction) => (
