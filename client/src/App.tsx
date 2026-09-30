@@ -118,10 +118,10 @@ function App() {
   if (!dashboard) return <main className="status">Laddar dashboard...</main>;
 
   const remainingAmount = Math.max(dashboard.spending.limit - dashboard.spending.used, 0);
-  const amountPercentage = Math.round(
-    (remainingAmount / dashboard.spending.limit) * 100
+  const usedPercentage = Math.min(
+    Math.round((dashboard.spending.used / dashboard.spending.limit) * 100),
+    100
   );
-  const remainingPercentage = 100 - amountPercentage;
 
   return (
     <main className="phone-shell">
@@ -168,12 +168,12 @@ function App() {
       <section className="spending-card">
         <div className="section-heading">
           <h1>Remaining spend</h1>
-          <span>{remainingPercentage}%</span>
+          <span>{usedPercentage}% used</span>
         </div>
         <strong className="spending-total">
           {formatMoney(remainingAmount, dashboard.spending.currency)} / {formatMoney(dashboard.spending.limit, dashboard.spending.currency)}
         </strong>
-        <div className="progress-track"><span style={{ width: `${amountPercentage}%` }} /></div>
+        <div className="progress-track"><span style={{ width: `${usedPercentage}%` }} /></div>
         <p>based on your set limit</p>
       </section>
 
