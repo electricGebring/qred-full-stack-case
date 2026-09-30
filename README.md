@@ -71,7 +71,7 @@ POST /api/cards/:companyId/deactivate
 - `cards` belongs to a company and stores status and invoice due date.
 - `transactions` belongs to a company and stores amount, currency, description, and date.
 
-The local SQLite database is created automatically at `server/data/qred.db`. It is ignored by Git. Seed data is inserted only when each demo company is missing.
+The local SQLite database is created automatically at `server/data/qred.db`. It is ignored by Git. Demo company and card records are inserted only when missing. Transaction rows are cleared and reseeded each time the API starts, and the remaining transaction counts are recalculated then.
 
 ## Design decisions
 

@@ -30,7 +30,7 @@ That gives Frontend a predictable contract while the backend is being built and 
 
 1. Product explains the user goal and expected result.
 2. Frontend and Backend agree on a small API response.
-3. Frontend can use example data while Backend connects the real database.
+3. As a team workflow, Frontend can use mock data or a mock server while Backend builds the real integration.
 4. Both teams show their work early and adjust together.
 
 This reduces waiting and makes misunderstandings visible sooner.
@@ -54,7 +54,7 @@ For this case, these questions helped define the company selector, card status, 
 - A SQLite database with companies, cards, and transactions
 - A company selector with two demo companies
 - Card activation and refresh of the dashboard state
-- Transaction list toggle to show more items when needed
+- Paginated transaction list with a load-more action
 - Loading and error handling
 - API tests for the main happy-path and invalid cases
 
@@ -63,16 +63,16 @@ Demo flow:
 1. Start the API and frontend.
 2. Show the dashboard for `Nordic AB`.
 3. Activate the inactive card.
-4. Open the menu and click the support link.
-5. Show the transaction list and the toggle behavior.
+4. Open the menu and show the support link.
+5. Load the next page of transactions.
 6. Explain that the API contract was agreed before implementation.
 
 ### Values and limitations
 
-**Transparency:** I kept the API contract explicit and documented the main assumptions and error states.
+**Transparency:** I kept the API contract explicit in TypeScript and documented key API responses in the README. The UI implements basic loading and error feedback.
 
-**Collaboration:** I chose a small but realistic setup that lets Frontend and Backend work in parallel without blocking each other.
+**Innovation:** I used a small working prototype with seeded data and paginated transactions to make the user flow concrete and testable.
 
-**Delivery focus:** I prioritized a clear mobile experience and a complete working flow over overbuilding the solution.
+**Passion:** I wanted the main dashboard flow to work end to end, from loading the data to activating a card and viewing transactions.
 
-With more time, I would add authentication, more validation, pagination for transactions, and real integration to Qred services.
+With more time, I would add authentication, stronger validation, database migrations, a production deployment setup, and real integration to Qred services.
