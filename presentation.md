@@ -22,6 +22,8 @@ Before implementation, Product, Frontend, and Backend should agree on:
 
 In this demo, that agreement is represented by the dashboard contract, the Express routes, and the TypeScript models.
 
+For a larger team, I would document and version the contract with OpenAPI/Swagger so Frontend and Backend can work from the same specification.
+
 That gives Frontend a predictable contract while the backend is being built and avoids late surprises.
 
 ### 3. How teams can work in parallel
