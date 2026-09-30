@@ -4,6 +4,7 @@
   "workspaces": ["server", "client"],
   "scripts": {
     "dev": "npm run dev --workspace server",
-    "build": "npm run build --workspace server"
+    "build": "npm run build --workspace server",
+    "reset:nordic-card": "curl -X POST http://localhost:3000/api/cards/company-nordic/deactivate"
   }
 }
