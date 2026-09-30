@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./styles.css";
 
 type Transaction = {
@@ -32,6 +32,7 @@ const formatMoney = (amount: number, currency: string) =>
 
 function App() {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+  const lastLoadedCompanyId = useRef("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -55,24 +56,44 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!selectedCompanyId) return;
+    if (!selectedCompanyId || selectedCompanyId === lastLoadedCompanyId.current) return;
 
+    const controller = new AbortController();
     setError(null);
     setIsLoadingTransactions(false);
-    setDashboard(null);
-    fetch(`http://localhost:3000/api/dashboard?companyId=${encodeURIComponent(selectedCompanyId)}`)
+    fetch(`http://localhost:3000/api/dashboard?companyId=${encodeURIComponent(selectedCompanyId)}`, {
+      signal: controller.signal
+    })
       .then((response) => {
         if (!response.ok) throw new Error("Kunde inte hämta dashboard-data.");
         return response.json() as Promise<Dashboard>;
       })
-      .then(setDashboard)
-      .catch(() => setError("Kunde inte hämta dashboard-data."));
+      .then((loadedDashboard) => {
+        lastLoadedCompanyId.current = loadedDashboard.company.id;
+        setDashboard(loadedDashboard);
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+
+        setError("Kunde inte hämta dashboard-data.");
+        if (lastLoadedCompanyId.current) {
+          setSelectedCompanyId(lastLoadedCompanyId.current);
+        }
+      });
+
+    return () => controller.abort();
   }, [selectedCompanyId]);
 
   const loadMoreTransactions = () => {
-    if (!dashboard || dashboard.remainingTransactionCount === 0 || isLoadingTransactions) return;
+    if (
+      !dashboard ||
+      dashboard.company.id !== selectedCompanyId ||
+      dashboard.remainingTransactionCount === 0 ||
+      isLoadingTransactions
+    ) return;
 
     const offset = dashboard.transactions.length;
+    setError(null);
     setIsLoadingTransactions(true);
     fetch(`http://localhost:3000/api/companies/${encodeURIComponent(selectedCompanyId)}/transactions?offset=${offset}`)
       .then((response) => {
@@ -95,8 +116,9 @@ function App() {
   };
 
   const activateCard = () => {
-    if (!dashboard || dashboard.card.status === "active") return;
+    if (!dashboard || dashboard.company.id !== selectedCompanyId || dashboard.card.status === "active") return;
 
+    setError(null);
     setIsActivatingCard(true);
     fetch(`http://localhost:3000/api/cards/${encodeURIComponent(selectedCompanyId)}/activate`, {
       method: "POST"
@@ -114,8 +136,9 @@ function App() {
       .finally(() => setIsActivatingCard(false));
   };
 
-  if (error) return <main className="status">{error}</main>;
-  if (!dashboard) return <main className="status">Laddar dashboard...</main>;
+  if (!dashboard) return <main className="status" role={error ? "alert" : "status"}>{error ?? "Laddar dashboard..."}</main>;
+
+  const isSwitchingCompany = dashboard.company.id !== selectedCompanyId;
 
   const remainingAmount = Math.max(dashboard.spending.limit - dashboard.spending.used, 0);
   const usedPercentage = Math.min(
@@ -144,6 +167,9 @@ function App() {
           <a href="mailto:support@qred.com">Support</a>
         </nav>
       )}
+
+      {error && <p className="inline-error" role="alert">{error}</p>}
+      {isSwitchingCompany && <p className="loading-message" role="status">Laddar valt företags dashboard...</p>}
 
       <label className="company-picker">
         <span className="sr-only">Välj företag</span>
@@ -195,7 +221,7 @@ function App() {
             className="more-button"
             type="button"
             onClick={loadMoreTransactions}
-            disabled={isLoadingTransactions}
+            disabled={isLoadingTransactions || isSwitchingCompany}
           >
             {isLoadingTransactions ? "Loading..." : "Show more transactions"} <span>›</span>
           </button>
@@ -206,7 +232,7 @@ function App() {
         <button
           type="button"
           onClick={activateCard}
-          disabled={dashboard.card.status === "active" || isActivatingCard}
+          disabled={dashboard.card.status === "active" || isActivatingCard || isSwitchingCompany}
         >
           {isActivatingCard ? "Activating..." : dashboard.card.status === "active" ? "Card active" : "Activate card"}
         </button>

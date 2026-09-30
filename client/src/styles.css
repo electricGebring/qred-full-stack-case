@@ -30,6 +30,8 @@ button { cursor: pointer; }
 .menu-panel { display: grid; gap: 8px; margin: -12px 0 16px; padding: 12px; background: #e9eeea; border: 1px solid #cbd6d1; }
 .menu-panel a { padding: 10px; color: #102b30; text-decoration: none; }
 .menu-panel a:hover, .menu-panel a:focus-visible { background: #f8f8f3; outline: 2px solid #e45b39; outline-offset: -2px; }
+.inline-error { margin: 0 0 16px; padding: 12px 14px; border-left: 4px solid #e45b39; background: #f9e6df; color: #812d1c; }
+.loading-message { margin-top: 20px; }
 .company-picker select { width: 100%; padding: 15px; border: 1px solid #cbd6d1; background: white; color: #102b30; }
 .invoice-card, .more-button { width: 100%; justify-content: space-between; border: 0; padding: 16px; background: #e9eeea; color: #102b30; }
 .invoice-card { margin-top: 16px; }
