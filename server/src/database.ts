@@ -2,7 +2,9 @@ import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { DashboardResponse } from "./dashboard.js";
+import type { DashboardResponse, Transaction, TransactionsPage } from "./dashboard.js";
+
+const transactionPageSize = 2;
 
 const serverDirectory = dirname(fileURLToPath(import.meta.url));
 const databasePath = join(serverDirectory, "..", "data", "qred.db");
@@ -38,8 +40,8 @@ database.exec(`
 `);
 
 const companySeeds = [
-  { id: "company-ab", name: "Company AB", spendingLimit: 10000, remainingTransactions: 54 },
-  { id: "company-nordic", name: "Nordic AB", spendingLimit: 15000, remainingTransactions: 27 }
+  { id: "company-ab", name: "Company AB", spendingLimit: 10000 },
+  { id: "company-nordic", name: "Nordic AB", spendingLimit: 15000 }
 ];
 
 for (const companySeed of companySeeds) {
@@ -51,7 +53,7 @@ for (const companySeed of companySeeds) {
     database.prepare(`
       INSERT INTO companies (id, name, spending_limit, remaining_transaction_count)
       VALUES (?, ?, ?, ?)
-    `).run(companySeed.id, companySeed.name, companySeed.spendingLimit, companySeed.remainingTransactions);
+    `).run(companySeed.id, companySeed.name, companySeed.spendingLimit, 0);
   }
 }
 
@@ -86,7 +88,12 @@ const transactionSeeds = {
     { id: "transaction-7", description: "Equipment rental", amount: 2500, occurredAt: "2026-09-16" },
     { id: "transaction-8", description: "Staff onboarding", amount: 1950, occurredAt: "2026-09-14" },
     { id: "transaction-9", description: "Cloud hosting", amount: 1350, occurredAt: "2026-09-11" },
-    { id: "transaction-10", description: "Insurance premium", amount: 4700, occurredAt: "2026-09-09" }
+    { id: "transaction-10", description: "Insurance premium", amount: 3700, occurredAt: "2026-09-09" },
+    { id: "transaction-11", description: "Taxi to client meeting", amount: 180, occurredAt: "2026-09-08" },
+    { id: "transaction-12", description: "Office supplies", amount: 250, occurredAt: "2026-09-07" },
+    { id: "transaction-13", description: "Parking", amount: 120, occurredAt: "2026-09-06" },
+    { id: "transaction-14", description: "Software add-on", amount: 300, occurredAt: "2026-09-05" },
+    { id: "transaction-15", description: "Team lunch", amount: 150, occurredAt: "2026-09-04" }
   ]
 };
 
@@ -102,6 +109,16 @@ for (const [companyId, seeds] of Object.entries(transactionSeeds)) {
     addTransaction.run(seed.id, companyId, seed.description, seed.amount, "SEK", seed.occurredAt);
   }
 }
+
+const updateRemainingTransactionCount = database.prepare(`
+  UPDATE companies
+  SET remaining_transaction_count = MAX(
+    (SELECT COUNT(*) FROM transactions WHERE company_id = companies.id) - ?,
+    0
+  )
+`);
+
+updateRemainingTransactionCount.run(transactionPageSize);
 
 type CompanyRow = {
   id: string;
@@ -128,6 +145,32 @@ type TransactionRow = {
   occurred_at: string;
 };
 
+function readTransactionPage(companyId: string, offset: number): TransactionsPage {
+  const rows = database.prepare(`
+    SELECT id, description, amount, currency, occurred_at
+    FROM transactions WHERE company_id = ?
+    ORDER BY occurred_at DESC
+    LIMIT ? OFFSET ?
+  `).all(companyId, transactionPageSize, offset) as TransactionRow[];
+  const result = database.prepare(`
+    SELECT COUNT(*) AS total
+    FROM transactions WHERE company_id = ?
+  `).get(companyId) as { total: number };
+
+  const transactions: Transaction[] = rows.map((transaction) => ({
+    id: transaction.id,
+    description: transaction.description,
+    amount: transaction.amount,
+    currency: transaction.currency,
+    occurredAt: transaction.occurred_at
+  }));
+
+  return {
+    transactions,
+    remainingTransactionCount: Math.max(result.total - offset - transactions.length, 0)
+  };
+}
+
 export function getCompanies(): CompanySummary[] {
   return database
     .prepare("SELECT id, name FROM companies ORDER BY name")
@@ -148,29 +191,35 @@ export function getDashboard(companyId: string): DashboardResponse {
     SELECT status, invoice_due FROM cards WHERE company_id = ?
   `).get(company.id) as CardRow;
 
-  const transactions = database.prepare(`
-    SELECT id, description, amount, currency, occurred_at
+  const transactionPage = readTransactionPage(company.id, 0);
+  const spending = database.prepare(`
+    SELECT COALESCE(SUM(amount), 0) AS used
     FROM transactions WHERE company_id = ?
-    ORDER BY occurred_at DESC
-  `).all(company.id) as TransactionRow[];
+  `).get(company.id) as { used: number };
 
   return {
     company: { id: company.id, name: company.name },
     card: { status: card.status, invoiceDue: card.invoice_due },
     spending: {
-      used: transactions.reduce((total, transaction) => total + transaction.amount, 0),
+      used: spending.used,
       limit: company.spending_limit,
       currency: "SEK"
     },
-    transactions: transactions.map((transaction) => ({
-      id: transaction.id,
-      description: transaction.description,
-      amount: transaction.amount,
-      currency: transaction.currency,
-      occurredAt: transaction.occurred_at
-    })),
-    remainingTransactionCount: company.remaining_transaction_count
+    transactions: transactionPage.transactions,
+    remainingTransactionCount: transactionPage.remainingTransactionCount
   };
+}
+
+export function getTransactions(companyId: string, offset: number): TransactionsPage {
+  const company = database
+    .prepare("SELECT id FROM companies WHERE id = ?")
+    .get(companyId);
+
+  if (!company) {
+    throw new Error(`Company not found: ${companyId}`);
+  }
+
+  return readTransactionPage(companyId, offset);
 }
 
 export function activateCard(companyId: string): void {

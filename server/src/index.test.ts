@@ -21,18 +21,42 @@ test("GET /api/dashboard requires a companyId", async () => {
   });
 });
 
-test("GET /api/dashboard returns exactly five demo transactions for each company", async () => {
+test("GET /api/dashboard returns the first transaction page and remaining count", async () => {
   const firstResponse = await request(app)
     .get("/api/dashboard?companyId=company-ab");
 
   expect(firstResponse.status).toBe(200);
-  expect(firstResponse.body.transactions).toHaveLength(5);
+  expect(firstResponse.body.transactions).toHaveLength(2);
+  expect(firstResponse.body.remainingTransactionCount).toBe(3);
 
   const secondResponse = await request(app)
     .get("/api/dashboard?companyId=company-nordic");
 
   expect(secondResponse.status).toBe(200);
-  expect(secondResponse.body.transactions).toHaveLength(5);
+  expect(secondResponse.body.transactions).toHaveLength(2);
+  expect(secondResponse.body.remainingTransactionCount).toBe(8);
+  expect(secondResponse.body.spending.used).toBe(13700);
+});
+
+test("GET /api/companies/:companyId/transactions returns the requested page", async () => {
+  const firstPage = await request(app)
+    .get("/api/companies/company-nordic/transactions?offset=2");
+
+  expect(firstPage.status).toBe(200);
+  expect(firstPage.body.transactions).toHaveLength(2);
+  expect(firstPage.body.remainingTransactionCount).toBe(6);
+  expect(firstPage.body.transactions.map((transaction: { id: string }) => transaction.id))
+    .not.toContain("transaction-6");
+});
+
+test("GET /api/companies/:companyId/transactions validates offset and company", async () => {
+  const invalidOffset = await request(app)
+    .get("/api/companies/company-nordic/transactions?offset=-1");
+  const unknownCompany = await request(app)
+    .get("/api/companies/does-not-exist/transactions");
+
+  expect(invalidOffset.status).toBe(400);
+  expect(unknownCompany.status).toBe(404);
 });
 
 test("GET /api/dashboard returns 404 for an unknown company", async () => {

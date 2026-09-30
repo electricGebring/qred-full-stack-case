@@ -1,3 +1,16 @@
+export type Transaction = {
+  id: string;
+  description: string;
+  amount: number;
+  currency: "SEK";
+  occurredAt: string;
+};
+
+export type TransactionsPage = {
+  transactions: Transaction[];
+  remainingTransactionCount: number;
+};
+
 export type DashboardResponse = {
   company: {
     id: string;
@@ -12,13 +25,7 @@ export type DashboardResponse = {
     limit: number;
     currency: "SEK";
   };
-  transactions: Array<{
-    id: string;
-    description: string;
-    amount: number;
-    currency: "SEK";
-    occurredAt: string;
-  }>;
+  transactions: Transaction[];
   remainingTransactionCount: number;
 };
 

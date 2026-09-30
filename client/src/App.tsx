@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
 import "./styles.css";
 
+type Transaction = {
+  id: string;
+  description: string;
+  amount: number;
+  currency: "SEK";
+  occurredAt: string;
+};
+
+type TransactionsPage = {
+  transactions: Transaction[];
+  remainingTransactionCount: number;
+};
+
 type Dashboard = {
   company: { id: string; name: string };
   card: { status: "active" | "inactive"; invoiceDue: string };
   spending: { used: number; limit: number; currency: "SEK" };
-  transactions: Array<{
-    id: string;
-    description: string;
-    amount: number;
-    currency: "SEK";
-    occurredAt: string;
-  }>;
+  transactions: Transaction[];
   remainingTransactionCount: number;
 };
 
@@ -30,7 +37,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [isActivatingCard, setIsActivatingCard] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:3000/api/companies")
@@ -39,6 +46,7 @@ function App() {
         return response.json() as Promise<Company[]>;
       })
       .then((loadedCompanies) => {
+        console.log(loadedCompanies, 'loadedCompanies');
         if (loadedCompanies.length === 0) throw new Error("Inga företag hittades.");
         setCompanies(loadedCompanies);
         setSelectedCompanyId(loadedCompanies[0].id);
@@ -50,7 +58,7 @@ function App() {
     if (!selectedCompanyId) return;
 
     setError(null);
-    setShowAllTransactions(false);
+    setIsLoadingTransactions(false);
     setDashboard(null);
     fetch(`http://localhost:3000/api/dashboard?companyId=${encodeURIComponent(selectedCompanyId)}`)
       .then((response) => {
@@ -60,6 +68,31 @@ function App() {
       .then(setDashboard)
       .catch(() => setError("Kunde inte hämta dashboard-data."));
   }, [selectedCompanyId]);
+
+  const loadMoreTransactions = () => {
+    if (!dashboard || dashboard.remainingTransactionCount === 0 || isLoadingTransactions) return;
+
+    const offset = dashboard.transactions.length;
+    setIsLoadingTransactions(true);
+    fetch(`http://localhost:3000/api/companies/${encodeURIComponent(selectedCompanyId)}/transactions?offset=${offset}`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Kunde inte hämta fler transaktioner.");
+        return response.json() as Promise<TransactionsPage>;
+      })
+      .then((page) => {
+        setDashboard((current) => {
+          if (!current || current.company.id !== selectedCompanyId) return current;
+
+          return {
+            ...current,
+            transactions: [...current.transactions, ...page.transactions],
+            remainingTransactionCount: page.remainingTransactionCount
+          };
+        });
+      })
+      .catch(() => setError("Kunde inte hämta fler transaktioner."))
+      .finally(() => setIsLoadingTransactions(false));
+  };
 
   const activateCard = () => {
     if (!dashboard || dashboard.card.status === "active") return;
@@ -85,9 +118,10 @@ function App() {
   if (!dashboard) return <main className="status">Laddar dashboard...</main>;
 
   const remainingAmount = Math.max(dashboard.spending.limit - dashboard.spending.used, 0);
-  const remainingPercentage = Math.round(
+  const amountPercentage = Math.round(
     (remainingAmount / dashboard.spending.limit) * 100
   );
+  const remainingPercentage = 100 - amountPercentage;
 
   return (
     <main className="phone-shell">
@@ -139,28 +173,33 @@ function App() {
         <strong className="spending-total">
           {formatMoney(remainingAmount, dashboard.spending.currency)} / {formatMoney(dashboard.spending.limit, dashboard.spending.currency)}
         </strong>
-        <div className="progress-track"><span style={{ width: `${remainingPercentage}%` }} /></div>
+        <div className="progress-track"><span style={{ width: `${amountPercentage}%` }} /></div>
         <p>based on your set limit</p>
       </section>
 
       <section className="transactions" id="transactions">
         <h2>Latest transactions</h2>
-        <p className="transaction-summary">{dashboard.remainingTransactionCount} more transactions available</p>
-        {dashboard.transactions
-          .slice(0, showAllTransactions ? dashboard.transactions.length : 2)
-          .map((transaction) => (
+        <p className="transaction-summary">
+          {dashboard.remainingTransactionCount > 0
+            ? `${dashboard.remainingTransactionCount} more transactions available`
+            : "All transactions loaded"}
+        </p>
+        {dashboard.transactions.map((transaction) => (
           <div className="transaction" key={transaction.id}>
             <span>{transaction.description}<small>{transaction.occurredAt}</small></span>
             <strong>{formatMoney(transaction.amount, transaction.currency)}</strong>
           </div>
         ))}
-        <button
-          className="more-button"
-          type="button"
-          onClick={() => setShowAllTransactions((isShown) => !isShown)}
-        >
-          {showAllTransactions ? "Show fewer transactions" : "Show all loaded transactions"} <span>›</span>
-        </button>
+        {dashboard.remainingTransactionCount > 0 && (
+          <button
+            className="more-button"
+            type="button"
+            onClick={loadMoreTransactions}
+            disabled={isLoadingTransactions}
+          >
+            {isLoadingTransactions ? "Loading..." : "Show more transactions"} <span>›</span>
+          </button>
+        )}
       </section>
 
       <div className="actions">

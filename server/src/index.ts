@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { activateCard, deactivateCard, getCompanies, getDashboard } from "./database.js";
+import { activateCard, deactivateCard, getCompanies, getDashboard, getTransactions } from "./database.js";
 
 const app = express();
 app.use(cors({ origin: "http://localhost:5173" }));
@@ -11,6 +11,21 @@ app.get("/api/health", (_request, response) => {
 
 app.get("/api/companies", (_request, response) => {
   response.json(getCompanies());
+});
+
+app.get("/api/companies/:companyId/transactions", (request, response) => {
+  const offset = Number(request.query.offset ?? 0);
+
+  if (!Number.isInteger(offset) || offset < 0) {
+    response.status(400).json({ error: "offset must be a non-negative integer" });
+    return;
+  }
+
+  try {
+    response.json(getTransactions(request.params.companyId, offset));
+  } catch {
+    response.status(404).json({ error: "Company not found" });
+  }
 });
 
 app.post("/api/cards/:companyId/activate", (request, response) => {

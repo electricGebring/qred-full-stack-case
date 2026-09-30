@@ -36,7 +36,7 @@ Run the backend API tests from the project root:
 npm test --workspace server
 ```
 
-The tests cover the company list, missing and unknown `companyId` values, and the card status actions.
+The tests cover the company list, dashboard validation, paginated transactions, and card status actions.
 
 ## API
 
@@ -50,9 +50,13 @@ Returns the companies available to the current user/demo session.
 
 ### `GET /api/dashboard?companyId=company-ab`
 
-Returns the company, card, spending, and latest transaction data needed by the dashboard.
+Returns the company, card, spending, and first page of transaction data needed by the dashboard.
 
 The API returns `400` when `companyId` is missing and `404` when the company does not exist.
+
+### `GET /api/companies/:companyId/transactions?offset=2`
+
+Returns the next page of transactions and the number still available. Pages contain two transactions; `offset` must be a non-negative integer.
 
 ### Card status actions
 
